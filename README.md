@@ -2,23 +2,25 @@
 
 **Production full-stack retail, e-commerce and optical-shop operations platform**
 
-[Live production site](https://www.qayoomoptics.com) · [Architecture](docs/ARCHITECTURE.md) · [Engineering notes](docs/ENGINEERING.md) · [Screenshot guide](docs/SCREENSHOTS.md)
+[Live production site](https://www.qayoomoptics.com) · [Architecture](docs/ARCHITECTURE.md) · [Engineering notes](docs/ENGINEERING.md)
 
 > This repository is a **sanitized public case study**. The production source code remains private because the application was built for a real business and contains commercial implementation details.
 
 ---
 
-## Overview
+## Product Overview
 
-Qayoom Optics is a production software platform built for an optical retail business in Pakistan. I designed and developed the application as the **sole full-stack developer**, covering both the customer-facing e-commerce experience and the internal workflows used by the physical shop.
+Qayoom Optics is a production software platform built for an optical retail business in Pakistan. I designed and developed the application as the **sole full-stack developer**, covering the customer-facing e-commerce experience, prescription-eyewear workflows, administration, inventory, fulfillment and physical-shop POS operations.
 
-The project goes beyond a conventional storefront. It combines online commerce, prescription-eyewear workflows, inventory, order fulfillment, courier integration, customer authentication, analytics and physical-shop POS operations in one system.
+The system is not a storefront-only project. It combines online commerce and in-store operational software around one shared product, inventory and order domain.
+
+![Qayoom Optics storefront](01-homepage.png)
 
 ### My Role
 
 **Sole Full-Stack Developer**
 
-I was responsible for the project end-to-end:
+I owned the project end-to-end across:
 
 - requirements and workflow analysis
 - application architecture
@@ -33,17 +35,85 @@ I was responsible for the project end-to-end:
 
 ---
 
-## The Business Problem
+## From Product Discovery to Prescription Commerce
 
-An optical retailer has requirements that do not fit neatly into a generic e-commerce template.
+The customer experience supports a real product catalog with audience/category filtering, search, pagination and pricing rather than a static marketing showcase.
 
-The business needed to support nationwide online product discovery and ordering, prescription-eyewear configuration, stock visibility, staff order processing, physical-shop sales, local courier booking, operational documents, customer accounts, reviews, inquiries and financial/shop-ledger workflows.
+![Catalog and faceted product discovery](02-catalog.png)
 
-Instead of building disconnected tools for each workflow, the application centralizes them into one operational platform.
+Optical retail introduces requirements that generic commerce systems do not normally model. Prescription configuration is part of the purchase workflow itself, including OD/OS values and measurements such as SPH, CYL, AXIS and PD together with lens selection and pricing.
+
+![Prescription and lens configuration](03-product-prescription.png)
+
+This required prescription information to be treated as structured commerce data rather than as a free-form note attached after checkout.
 
 ---
 
-## System at a Glance
+## Checkout & Order Workflow
+
+The checkout flow combines order items, shipping details, totals and the business's supported payment methods.
+
+![Secure checkout](04-checkout.png)
+
+Current production payment workflows are **Cash on Delivery** and **bank transfer / wallet**. Online card-gateway processing is not presented as a production feature.
+
+---
+
+## Operational Control Center
+
+The internal application gives staff a consolidated view of online orders, physical-shop sales, catalog health and inventory alerts.
+
+![Operational dashboard](06-admin-dashboard.png)
+
+The goal was to avoid maintaining separate operational silos for the website and the physical shop. Products, stock and sales activity are coordinated through the same application domain.
+
+---
+
+## Fulfillment & Courier Operations
+
+Order processing includes status management, customer/shipping context, prescription-aware line items and packing-slip generation.
+
+![Order processing and fulfillment](07-admin-orders.png)
+
+Domestic fulfillment integrates with **Leopards Courier** for shipment workflows. Customer-entered city names do not always match the courier's canonical catalog, so city resolution uses a staged matching strategy rather than direct string equality alone.
+
+Protected third-party document workflows are used where shipping labels or private documents should not simply become unrestricted public URLs.
+
+---
+
+## Inventory Management
+
+The internal inventory workstation supports SKU search, pricing, stock adjustment, channel controls and low-stock visibility.
+
+![Inventory workstation](08-inventory-products.png)
+
+A central design decision was to keep online commerce and physical-shop inventory within the same operational model so staff are not forced to reconcile independent stock systems manually.
+
+---
+
+## Physical Shop POS
+
+The same platform also supports walk-in sales through a dedicated POS terminal.
+
+![Physical-shop POS terminal](09-pos-terminal.png)
+
+The POS workflow includes product selection, operator context, customer details, quantities, payment method and sale totals. Historical sale data is preserved so completed transactions can be reprinted reliably even if mutable product data changes later.
+
+---
+
+## Operational Documents
+
+Retail software also needs to work outside the browser viewport. The system generates operational print output including A4 packing slips and 80mm thermal receipts.
+
+<p align="center">
+  <img src="11-packing-slip.png" alt="A4 packing slip with prescription details" width="720" />
+</p>
+
+The packing slip preserves line items, prescription values and order totals in a format designed for staff fulfillment rather than customer-facing browsing.
+
+---
+
+## System Architecture
 
 ```mermaid
 flowchart TB
@@ -69,56 +139,7 @@ flowchart TB
 
 The application uses the Next.js App Router with server-rendered routes, server components, client components and server actions. PostgreSQL is modeled through Prisma, while Supabase provides database infrastructure, storage and realtime capabilities.
 
----
-
-## Core Product Areas
-
-### Customer Storefront
-
-- product catalog and faceted discovery
-- product detail pages
-- prescription and lens configuration
-- cart and checkout
-- cash-on-delivery and bank-transfer workflows
-- order tracking
-- account and order history
-- customer prescription records
-- reviews and inquiries
-- OTP-based authentication
-
-### Administration
-
-- realtime dashboard notifications
-- order management
-- product CRUD
-- inventory and stock workflows
-- prescription management
-- analytics
-- review moderation
-- inquiry management
-- operational reporting
-- store configuration
-
-### Physical Shop / POS
-
-- POS terminal
-- in-store sale recording
-- sales history
-- stock management
-- financial ledger / Roznamcha workflows
-- receipt reprinting
-- 80mm thermal receipt output
-- A4 packing slips
-
----
-
-## Optical Prescription Domain
-
-Prescription eyewear introduces domain-specific data that a generic store does not usually model.
-
-The system supports optical values including **OD / OS, SPH, CYL, AXIS, ADD and PD**. Prescription data participates directly in the order workflow together with frame selection, lens configuration and pricing.
-
-This required the commerce model to treat prescription information as structured product/order data rather than as an unrelated text note.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for a more detailed walkthrough.
 
 ---
 
@@ -138,24 +159,6 @@ The production application uses **18+ Prisma models** across the retail domain.
 | Configuration | Store and messaging configuration |
 
 The order domain supports both online and physical-shop workflows so sales and inventory are not isolated into separate systems.
-
----
-
-## Third-Party Integrations
-
-### Leopards Courier
-
-Domestic fulfillment includes integration with Leopards Courier for shipment booking, cancellation, courier-city resolution and shipping-label/slip retrieval.
-
-Customer-entered city names do not always match the courier provider's city catalog, so the application uses multi-stage city matching rather than relying only on direct string equality.
-
-### Email & Authentication
-
-Transactional messaging covers order confirmation, internal order alerts, OTP authentication, shipping updates and delivery updates.
-
-### Supabase
-
-Supabase supports PostgreSQL infrastructure, realtime operational updates and file storage. Public product imagery and protected customer-uploaded documents are handled according to different access requirements.
 
 ---
 
@@ -205,6 +208,8 @@ Operational documents include both **80mm thermal receipts** and **A4 packing sl
 
 Courier labels and private uploaded documents should not simply become public static URLs. The system uses protected serving/proxy workflows so access is mediated by application authorization.
 
+More detail is available in [`docs/ENGINEERING.md`](docs/ENGINEERING.md).
+
 ---
 
 ## Technology
@@ -234,7 +239,13 @@ This case study deliberately distinguishes production features from experiments 
 - **Online card/payment-gateway processing is not currently implemented.** Production checkout supports the business's COD and bank-transfer workflows.
 - **Urdu/bilingual support is partial**, not an application-wide localization system.
 
-These boundaries are included so the portfolio reflects the system as it actually exists.
+---
+
+## Screenshot Disclosure
+
+The screenshots in this repository show the existing application UI. **Customer, prescription, stock and operational data shown in portfolio captures are synthetic; public catalog imagery is used.** Synthetic dashboard revenue/order values are demonstration data and are not presented as real business results.
+
+No production credentials, authentication data, real customer records, private prescriptions, bank receipts or sensitive ledger information are included in the published images.
 
 ---
 
@@ -246,18 +257,8 @@ This public repository documents architecture, engineering decisions, domain com
 
 ---
 
-## Screenshots
-
-A curated screenshot set will be added under `assets/screenshots/`.
-
-Planned captures include the storefront, catalog/filtering, prescription configuration, checkout, tracking, admin dashboard, orders, product management, analytics, POS, sales history, thermal receipt and A4 packing slip.
-
-See [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md) for the capture checklist and redaction rules.
-
----
-
 ## What This Project Demonstrates
 
-**Full-stack engineering · application architecture · relational data modeling · e-commerce · POS systems · inventory workflows · authentication · security-minded backend development · third-party API integrations · realtime operations · print workflows · debugging · deployment**
+**Full-stack engineering · application architecture · relational data modeling · e-commerce · prescription commerce · POS systems · inventory workflows · authentication · security-minded backend development · third-party API integrations · realtime operations · print workflows · debugging · deployment**
 
-The most important part of the project is not the number of frameworks involved; it is that the software is designed around a real retailer's operational requirements and runs as a production system.
+The important part of this project is not the number of frameworks involved. It is that the software was designed around a real retailer's operational requirements and runs as a production system.
